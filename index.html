@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Результаты работы</title>
+  <style>
+    :root {
+      --bg: #fafafa;
+      --text: #111;
+      --text-light: #666;
+      --border: #e5e5e5;
+      --hover-bg: #f5f5f5;
+      --bar-bg: #eee;
+      --bar-fill: #000;
+      --radius: 10px;
+      --font-main: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: "SF Mono", "Fira Code", "Consolas", monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-main);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 24px 16px 40px;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Пасхалка: 67 */
+    #easter-egg {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      font-size: clamp(12rem, 45vw, 25rem); font-weight: 900;
+      color: rgba(0, 0, 0, 0.03); pointer-events: none; z-index: -1;
+      opacity: 0; transform: scale(0.85) rotate(-5deg);
+      transition: opacity 1.5s ease, transform 1.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+      user-select: none;
+    }
+    #easter-egg.show { opacity: 1; transform: scale(1) rotate(0deg); }
+    #easter-egg.hide { opacity: 0; transform: scale(1.1) rotate(2deg); }
+
+    /* Анимированный фон */
+    .bg-layer {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none; z-index: 0;
+      background-image: 
+        radial-gradient(circle at 15% 25%, rgba(0,0,0,0.04) 0%, transparent 45%),
+        radial-gradient(circle at 85% 75%, rgba(0,0,0,0.03) 0%, transparent 45%);
+      animation: bgFloat 20s ease-in-out infinite alternate;
+    }
+    @keyframes bgFloat {
+      0% { transform: scale(1) rotate(0deg); }
+      100% { transform: scale(1.03) rotate(1.5deg); }
+    }
+
+    .container { width: 100%; max-width: 760px; position: relative; z-index: 1; }
+
+    header {
+      text-align: center; margin-bottom: 24px;
+      opacity: 0; animation: fadeDown 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    }
+    h1 { font-size: clamp(1.4rem, 5vw, 2rem); font-weight: 700; letter-spacing: -0.5px; margin-bottom: 6px; }
+    .subtitle {
+      font-size: 0.9rem; color: var(--text-light);
+      display: inline-block; padding: 5px 10px; border: 1px solid var(--border);
+      border-radius: 20px; background: #fff;
+    }
+    .subtitle span { font-weight: 600; color: var(--text); }
+
+    /* Поиск */
+    .search-wrapper {
+      margin-bottom: 20px; position: relative;
+      opacity: 0; animation: fadeDown 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) 0.15s forwards;
+    }
+    #search-input {
+      width: 100%; padding: 14px 40px 14px 16px; font-size: 16px;
+      border: 1px solid var(--border); border-radius: var(--radius);
+      background: #fff; color: var(--text); outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    #search-input:focus { border-color: #000; box-shadow: 0 0 0 3px rgba(0,0,0,0.05); }
+    #search-input::placeholder { color: #aaa; }
+    #clear-search {
+      position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; color: #999;
+      font-size: 1.4rem; line-height: 1; padding: 4px; display: none;
+    }
+    #clear-search:hover { color: #000; }
+
+    /* Таблица */
+    .table-wrapper {
+      background: #fff; border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.03);
+      opacity: 0; animation: fadeUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 0.3s forwards;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: #f8f8f8; border-bottom: 1px solid var(--border); }
+    th {
+      padding: 12px 16px; text-align: left;
+      font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.8px;
+      color: var(--text-light); font-weight: 600; white-space: nowrap;
+    }
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background 0.2s, transform 0.25s;
+      opacity: 0; transform: translateY(12px);
+      animation: rowEnter 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+      cursor: pointer; /* Для пасхалки */
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--hover-bg); transform: translateX(3px); }
+    td { padding: 11px 16px; font-size: 0.9rem; }
+    .rank { color: var(--text-light); font-weight: 500; width: 40px; text-align: center; }
+    .code { font-family: var(--font-mono); font-weight: 500; letter-spacing: -0.3px; }
+    
+    .score-cell { display: flex; align-items: center; gap: 10px; }
+    .score-value { font-weight: 600; min-width: 22px; text-align: right; }
+    .progress-bar { flex: 1; height: 4px; background: var(--bar-bg); border-radius: 2px; overflow: hidden; }
+    .progress-fill {
+      height: 100%; background: var(--bar-fill); width: 0%;
+      transition: width 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .no-results {
+      text-align: center; padding: 28px 16px; color: var(--text-light);
+      font-style: italic; display: none; border-top: 1px solid var(--border);
+    }
+
+    @keyframes fadeDown { to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+    @keyframes rowEnter { to { opacity: 1; transform: translateY(0); } }
+
+    @media (max-width: 540px) {
+      body { padding: 16px 12px 32px; }
+      th, td { padding: 10px 12px; font-size: 0.85rem; }
+      .score-cell { flex-direction: column; align-items: flex-start; gap: 3px; }
+      .progress-bar { width: 100%; height: 5px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div id="easter-egg">67</div>
+  <div class="bg-layer"></div>
+  
+  <div class="container">
+    <header>
+      <h1>Результаты работы</h1>
+      <p class="subtitle">Максимальный балл: <span>19</span></p>
+      <p class="subtitle">Минимальный балл для поступления: <span>7</span></p>
+    </header>
+
+    <div class="search-wrapper">
+      <input type="text" id="search-input" placeholder="Поиск по коду" autocomplete="off" inputmode="text" autocapitalize="characters">
+      <button id="clear-search" aria-label="Очистить поиск">✕</button>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr><th>№</th><th>Код</th><th>Балл</th></tr>
+        </thead>
+        <tbody id="results-body"></tbody>
+      </table>
+      <div id="no-results" class="no-results">Ничего не найдено</div>
+    </div>
+  </div>
+
+  <script>
+    const rawData = [
+      {code:"М-07-84",score:6},{code:"М-07-51",score:14},{code:"М-07-57",score:4},{code:"М-07-26",score:0},
+      {code:"М-07-85",score:11},{code:"М-07-35",score:5},{code:"М-07-94",score:5},{code:"М-07-22",score:5},
+      {code:"М-07-09",score:8},{code:"М-07-201",score:0},{code:"М-07-07",score:11},{code:"М-07-37",score:9},
+      {code:"М-07-69",score:11},{code:"М-07-202",score:1},{code:"М-07-63",score:6},{code:"М-07-25",score:10},
+      {code:"М-07-41",score:6},{code:"М-07-101",score:0},{code:"М-07-103",score:7},{code:"М-07-98",score:0},
+      {code:"М-07-21",score:2},{code:"М-07-80",score:0},{code:"М-07-36",score:3},{code:"М-07-48",score:10},
+      {code:"М-07-90",score:7},{code:"М-07-15",score:7},{code:"М-07-50",score:7},{code:"М-07-86",score:7},
+      {code:"М-07-32",score:9},{code:"М-07-76",score:4},{code:"М-07-39",score:1},{code:"М-07-71",score:8},
+      {code:"М-07-74",score:2},{code:"М-07-100",score:0},{code:"М-07-11",score:13},{code:"М-07-68",score:8},
+      {code:"М-07-05",score:3},{code:"М-07-10",score:19},{code:"М-07-42",score:7},{code:"М-07-20",score:2},
+      {code:"М-07-18",score:8},{code:"М-07-92",score:0},{code:"М-07-73",score:6},{code:"М-07-82",score:14},
+      {code:"М-07-95",score:7},{code:"М-07-38",score:3},{code:"М-07-44",score:0},{code:"М-07-65",score:0},
+      {code:"М-07-19",score:16},{code:"М-07-17",score:9},{code:"М-07-87",score:8},{code:"М-07-203",score:1},
+      {code:"М-07-23",score:0},{code:"М-07-67",score:0},{code:"М-07-96",score:15},{code:"М-07-70",score:0},
+      {code:"М-07-46",score:3},{code:"М-07-58",score:7},{code:"М-07-34",score:12},{code:"М-07-78",score:4},
+      {code:"М-07-47",score:7},{code:"М-07-79",score:19},{code:"М-07-97",score:12},{code:"М-07-99",score:0},
+      {code:"М-07-91",score:18}
+    ];
+
+    const sortedData = rawData.sort((a, b) => b.score - a.score);
+    const maxScore = 19;
+    const tbody = document.getElementById('results-body');
+    const fragment = document.createDocumentFragment();
+
+    sortedData.forEach((item, index) => {
+      const tr = document.createElement('tr');
+      tr.style.animationDelay = `${0.4 + index * 0.035}s`;
+      
+      const percent = (item.score / maxScore) * 100;
+      tr.innerHTML = `
+        <td class="rank">${index + 1}</td>
+        <td class="code">${item.code}</td>
+        <td><div class="score-cell"><span class="score-value">${item.score}</span><div class="progress-bar"><div class="progress-fill" style="width: 0%" data-width="${percent}%"></div></div></div></td>
+      `;
+      fragment.appendChild(tr);
+    });
+
+    tbody.appendChild(fragment);
+
+    // Анимация прогресс-баров
+    requestAnimationFrame(() => {
+      setTimeout(() => document.querySelectorAll('.progress-fill').forEach(bar => bar.style.width = bar.dataset.width), 250);
+    });
+
+    // Поиск
+    const searchInput = document.getElementById('search-input');
+    const clearBtn = document.getElementById('clear-search');
+    const noResultsMsg = document.getElementById('no-results');
+    const rows = tbody.querySelectorAll('tr');
+
+    function filterRows() {
+      const query = searchInput.value.trim().toLowerCase();
+      let visibleCount = 0;
+      rows.forEach(row => {
+        const code = row.querySelector('.code').textContent.toLowerCase();
+        const match = code.includes(query);
+        row.style.display = match ? '' : 'none';
+        visibleCount += match ? 1 : 0;
+      });
+      noResultsMsg.style.display = visibleCount === 0 ? 'block' : 'none';
+      clearBtn.style.display = query.length > 0 ? 'block' : 'none';
+    }
+
+    searchInput.addEventListener('input', filterRows);
+    clearBtn.addEventListener('click', () => { searchInput.value = ''; filterRows(); searchInput.focus(); });
+
+    // Пасхалка 67
+    const egg = document.getElementById('easter-egg');
+    const clickedRanks = new Set();
+    let eggCooldown = false;
+    let resetTimer;
+
+    function triggerEasterEgg() {
+      if (eggCooldown) return;
+      eggCooldown = true;
+      egg.classList.remove('hide');
+      void egg.offsetWidth; // reflow
+      egg.classList.add('show');
+      
+      setTimeout(() => {
+        egg.classList.remove('show');
+        egg.classList.add('hide');
+        setTimeout(() => { egg.classList.remove('hide'); eggCooldown = false; }, 1500);
+      }, 2500);
+    }
+
+    rows.forEach(row => {
+      row.addEventListener('click', () => {
+        const rank = parseInt(row.querySelector('.rank').textContent);
+        const code = row.querySelector('.code').textContent;
+
+        if (rank === 6 || rank === 7) {
+          clickedRanks.add(rank);
+          clearTimeout(resetTimer);
+          resetTimer = setTimeout(() => clickedRanks.clear(), 2000);
+          if (clickedRanks.has(6) && clickedRanks.has(7)) {
+            triggerEasterEgg();
+            clickedRanks.clear();
+          }
+        }
+        if (code === 'М-07-67' || rank === 67) {
+          triggerEasterEgg();
+        }
+      });
+    });
+
+    searchInput.addEventListener('input', (e) => {
+      if (e.target.value.trim() === '67') triggerEasterEgg();
+    });
+  </script>
+</body>
+</html>
